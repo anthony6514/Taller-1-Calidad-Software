@@ -1,35 +1,12 @@
-"""
-PATRÓN CREACIONAL: Multiton
-================================
-Contexto: Sistema de loggers por categoría de módulo.
-
-El Multiton es una generalización del Singleton: en lugar de
-permitir UNA sola instancia, permite UNA instancia por cada
-clave (key). La misma clave siempre devuelve el mismo objeto.
-
-Aquí se aplica para que cada módulo de la aplicación (base_de_datos,
-seguridad, pagos) tenga su propio Logger único y compartido.
-
-Diferencia con Singleton: Singleton → 1 instancia global.
-Multiton → 1 instancia por clave (N instancias controladas).
-"""
-
 import datetime
 from typing import ClassVar
 
 
-# ──────────────────────────────────────────────
-# Multiton base (metaclase reutilizable)
-# ──────────────────────────────────────────────
 class MultitonMeta(type):
-    """
-    Metaclase que implementa el patrón Multiton.
-    Cada subclase mantiene su propio diccionario de instancias.
-    """
+
     _instancias: ClassVar[dict] = {}
 
     def __call__(cls, clave: str, *args, **kwargs):
-        # Clave compuesta: (Clase, clave_usuario)
         llave = (cls, clave)
         if llave not in cls._instancias:
             instancia = super().__call__(clave, *args, **kwargs)
@@ -40,15 +17,7 @@ class MultitonMeta(type):
         return cls._instancias[llave]
 
 
-
-# Producto: Logger por módulo
-
 class Logger(metaclass=MultitonMeta):
-    """
-    Logger único por categoría/módulo.
-    Se crea una sola vez por clave; llamadas posteriores
-    devuelven la misma instancia.
-    """
 
     NIVELES = {"DEBUG": 0, "INFO": 1, "WARNING": 2, "ERROR": 3}
 
@@ -86,9 +55,6 @@ class Logger(metaclass=MultitonMeta):
         return f"Logger(modulo='{self.modulo}', id={id(self)})"
 
 
-# ──────────────────────────────────────────────
-# Simulación de módulos de la aplicación
-# ──────────────────────────────────────────────
 class ModuloBaseDeDatos:
     def __init__(self):
         self.log = Logger("base_de_datos", nivel_minimo="DEBUG")
@@ -108,7 +74,7 @@ class ModuloSeguridad:
         self.log = Logger("seguridad", nivel_minimo="WARNING")
 
     def autenticar(self, usuario: str):
-        self.log.info(f"Autenticando usuario '{usuario}'")  # filtrado por nivel
+        self.log.info(f"Autenticando usuario '{usuario}'")
         self.log.warning(f"Intento de acceso con usuario '{usuario}'")
 
     def acceso_denegado(self, usuario: str):
@@ -117,7 +83,6 @@ class ModuloSeguridad:
 
 class ModuloPagos:
     def __init__(self):
-        # Reutiliza el MISMO logger que ModuloBaseDeDatos
         self.log = Logger("base_de_datos")
 
     def procesar_pago(self, monto: float):
@@ -132,7 +97,7 @@ if __name__ == "__main__":
     print("\n--- Creación de módulos ---")
     db1 = ModuloBaseDeDatos()
     seg = ModuloSeguridad()
-    pagos = ModuloPagos()   # comparte logger con db1
+    pagos = ModuloPagos()
 
     print("\n--- Operaciones ---")
     db1.conectar()
